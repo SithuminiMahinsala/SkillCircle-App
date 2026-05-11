@@ -1,21 +1,14 @@
-//
-//  SignupView.swift
-//  SkillCircle
-//
-//  Created by COBSCCOMP242P-001 on 2026-05-11.
-//
-
 import SwiftUI
 
 struct SignupView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
+    @EnvironmentObject var authViewModel: AuthViewModel
     
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                
                 
                 VStack(spacing: 8) {
                     Image("AppLogoSmall")
@@ -29,7 +22,6 @@ struct SignupView: View {
                 }
                 .padding(.top, 50)
                 
-               
                 VStack(spacing: 6) {
                     Text("Create Account")
                         .font(.system(size: 32, weight: .black))
@@ -42,10 +34,7 @@ struct SignupView: View {
                 }
                 .padding(.bottom, 10)
                 
-                
                 VStack(spacing: 16) {
-                    
-                    
                     VStack(alignment: .leading, spacing: 8) {
                         Text("University Email")
                             .font(.subheadline)
@@ -59,7 +48,6 @@ struct SignupView: View {
                             .keyboardType(.emailAddress)
                     }
                     
-                    
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Password")
                             .font(.subheadline)
@@ -70,7 +58,6 @@ struct SignupView: View {
                             .background(Color(UIColor.systemGray6))
                             .cornerRadius(12)
                     }
-                    
                     
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Confirm Password")
@@ -85,11 +72,7 @@ struct SignupView: View {
                 }
                 .padding(.horizontal, 24)
                 
-                
-                Button(action: {
-                    
-                    print("Attempting to sign up with: \(email)")
-                }) {
+                NavigationLink(destination: SetupProfileBasicView(email: email, password: password)) {
                     Text("Sign Up")
                         .font(.headline)
                         .foregroundColor(.white)
@@ -106,15 +89,12 @@ struct SignupView: View {
                 
                 Spacer(minLength: 40)
                 
-                
                 HStack(spacing: 4) {
                     Text("ALREADY HAVE AN ACCOUNT?")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
-                    Button(action: {
-                    
-                    }) {
+                    NavigationLink(destination: LoginView()) {
                         Text("SIGN IN")
                             .font(.caption)
                             .fontWeight(.bold)
@@ -125,7 +105,6 @@ struct SignupView: View {
                 .padding(.bottom, 30)
             }
         }
-        
         .ignoresSafeArea(.keyboard)
     }
 }

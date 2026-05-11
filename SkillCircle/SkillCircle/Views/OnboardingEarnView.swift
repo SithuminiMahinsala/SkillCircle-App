@@ -26,9 +26,8 @@ struct OnboardingEarnView: View {
                 }
                 Spacer()
                 
-                Button(action: {
-                   
-                }) {
+                
+                NavigationLink(destination: LoginView()) {
                     Text("Skip")
                         .fontWeight(.semibold)
                         .foregroundColor(.deepIndigo)
@@ -41,13 +40,12 @@ struct OnboardingEarnView: View {
 
             
             ZStack(alignment: .bottom) {
-               
+                
                 RoundedRectangle(cornerRadius: 24)
                     .fill(Color.white)
                     .shadow(color: .black.opacity(0.05), radius: 15, x: 0, y: 10)
                     .frame(height: 340)
                 
-               
                 Image("TutorWorkingImage")
                     .resizable()
                     .scaledToFill()
@@ -55,7 +53,6 @@ struct OnboardingEarnView: View {
                     .clipped()
                     .padding(.bottom, 40)
 
-              
                 
                 .foregroundColor(.white)
                 .padding(.vertical, 12)
@@ -67,7 +64,7 @@ struct OnboardingEarnView: View {
             .padding(.horizontal, 30)
             .padding(.bottom, 20)
 
-          
+            
             VStack(spacing: 16) {
                 Text("EARN KNOWLEDGE TOKENS")
                     .font(.title2)
@@ -85,7 +82,7 @@ struct OnboardingEarnView: View {
 
             Spacer()
             
-           
+            
             HStack(spacing: 8) {
                 Circle()
                     .fill(Color.secondary.opacity(0.3))
@@ -104,9 +101,7 @@ struct OnboardingEarnView: View {
             Spacer()
 
            
-            Button(action: {
-                // Navigate to the third onboarding screen
-            }) {
+            NavigationLink(destination: OnboardingLearnView()) {
                 Text("Next")
                     .font(.headline)
                     .foregroundColor(.white)
@@ -121,6 +116,8 @@ struct OnboardingEarnView: View {
             .padding(.horizontal, 30)
             .padding(.bottom, 20)
         }
+       
+        .navigationBarBackButtonHidden(true)
     }
 }
 

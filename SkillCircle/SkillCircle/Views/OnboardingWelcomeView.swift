@@ -11,7 +11,7 @@ struct OnboardingWelcomeView: View {
     var body: some View {
         VStack(spacing: 20) {
             
-           
+            
             HStack {
                 HStack(spacing: 8) {
                     Image("AppLogoSmall")
@@ -26,9 +26,8 @@ struct OnboardingWelcomeView: View {
                 }
                 Spacer()
                 
-                Button(action: {
-                   
-                }) {
+                
+                NavigationLink(destination: LoginView()) {
                     Text("Skip")
                         .fontWeight(.semibold)
                         .foregroundColor(.deepIndigo)
@@ -46,7 +45,7 @@ struct OnboardingWelcomeView: View {
                 .frame(maxWidth: 280)
                 .padding(.bottom, 20)
 
-           
+            
             VStack(spacing: 16) {
                 Text("WELCOME TO SKILLCIRCLE")
                     .font(.title2)
@@ -64,7 +63,7 @@ struct OnboardingWelcomeView: View {
 
             Spacer()
             
-           
+         
             HStack(spacing: 8) {
                 Circle()
                     .fill(Color.deepIndigo)
@@ -83,9 +82,7 @@ struct OnboardingWelcomeView: View {
             Spacer()
 
             
-            Button(action: {
-                
-            }) {
+            NavigationLink(destination: OnboardingEarnView()) {
                 Text("Next")
                     .font(.headline)
                     .foregroundColor(.white)
@@ -100,6 +97,8 @@ struct OnboardingWelcomeView: View {
             .padding(.horizontal, 30)
             .padding(.bottom, 20)
         }
+        
+        .navigationBarBackButtonHidden(true)
     }
 }
 

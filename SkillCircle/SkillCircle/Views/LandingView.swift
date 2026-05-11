@@ -12,7 +12,7 @@ struct LandingView: View {
         NavigationStack {
             VStack(spacing: 20) {
                 
-        
+                
                 HStack {
                     HStack(spacing: 8) {
                         Image("AppLogoSmall")
@@ -27,8 +27,8 @@ struct LandingView: View {
                     }
                     Spacer()
                     
-                
-                    NavigationLink(destination: Text("Login Screen Coming Soon")) {
+                    
+                    NavigationLink(destination: LoginView()) {
                         Text("Sign in")
                             .fontWeight(.semibold)
                             .foregroundColor(.deepIndigo)
@@ -65,8 +65,9 @@ struct LandingView: View {
 
                 
                 VStack(spacing: 20) {
-                  
-                    NavigationLink(destination: Text("Onboarding Coming Soon")) {
+                    
+                    
+                    NavigationLink(destination: OnboardingWelcomeView()) {
                         Text("Get Started")
                             .font(.headline)
                             .foregroundColor(.white)
@@ -86,7 +87,8 @@ struct LandingView: View {
                             .tracking(0.5)
                             .foregroundColor(.secondary)
                         
-                        NavigationLink(destination: Text("Login Screen Coming Soon")) {
+                        
+                        NavigationLink(destination: LoginView()) {
                             Text("SIGN IN")
                                 .font(.caption)
                                 .fontWeight(.bold)

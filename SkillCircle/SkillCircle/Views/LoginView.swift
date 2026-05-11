@@ -10,6 +10,7 @@ import SwiftUI
 struct LoginView: View {
     @State private var email = ""
     @State private var password = ""
+    @EnvironmentObject var authViewModel: AuthViewModel
     
     var body: some View {
         ScrollView {
@@ -74,8 +75,7 @@ struct LoginView: View {
                 
                 // 4. Main Sign In Button
                 Button(action: {
-                    // Firebase Auth login logic will be connected here
-                    print("Attempting to sign in with: \(email)")
+                    authViewModel.login(email: email, password: password)
                 }) {
                     Text("Sign In")
                         .font(.headline)

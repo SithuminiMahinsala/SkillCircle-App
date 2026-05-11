@@ -11,7 +11,6 @@ struct OnboardingLearnView: View {
     var body: some View {
         VStack(spacing: 20) {
             
-           
             HStack {
                 HStack(spacing: 8) {
                     Image("AppLogoSmall")
@@ -26,8 +25,7 @@ struct OnboardingLearnView: View {
                 }
                 Spacer()
                 
-                Button(action: {
-                }) {
+                NavigationLink(destination: LoginView()) {
                     Text("Skip")
                         .fontWeight(.semibold)
                         .foregroundColor(.deepIndigo)
@@ -38,16 +36,13 @@ struct OnboardingLearnView: View {
 
             Spacer()
 
-           
             Image("OnboardingLearnImage")
                 .resizable()
                 .scaledToFit()
                 .frame(maxWidth: 280)
                 .padding(.bottom, 20)
-                
                 .shadow(color: .black.opacity(0.08), radius: 15, x: 0, y: 10)
 
-           
             VStack(spacing: 16) {
                 Text("GET EXPERT HELP INSTANTLY")
                     .font(.title2)
@@ -64,7 +59,6 @@ struct OnboardingLearnView: View {
             }
 
             Spacer()
-            
             
             HStack(spacing: 8) {
                 Circle()
@@ -83,10 +77,7 @@ struct OnboardingLearnView: View {
 
             Spacer()
 
-           
-            Button(action: {
-                
-            }) {
+            NavigationLink(destination: SignupView()) {
                 Text("Get Started")
                     .font(.headline)
                     .foregroundColor(.white)
@@ -101,6 +92,7 @@ struct OnboardingLearnView: View {
             .padding(.horizontal, 30)
             .padding(.bottom, 20)
         }
+        .navigationBarBackButtonHidden(true)
     }
 }
 
