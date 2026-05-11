@@ -17,21 +17,7 @@ struct ContentView: View {
             if authViewModel.currentUser != nil {
                
                 VStack(spacing: 20) {
-                    Image(systemName: "checkmark.seal.fill")
-                        .font(.system(size: 60))
-                        .foregroundColor(.green)
-                    
-                    Text("Welcome to SkillCircle!")
-                        .font(.title)
-                        .fontWeight(.bold)
-                    
-                    Text("You are successfully logged in.")
-                        .foregroundColor(.secondary)
-                    
-                    Button("Sign Out") {
-                        authViewModel.signOut()
-                    }
-                    .padding(.top, 20)
+                    MainTabView()
                 }
                 
             } else {
