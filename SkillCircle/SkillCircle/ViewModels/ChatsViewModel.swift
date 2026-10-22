@@ -63,26 +63,32 @@ class ChatsViewModel: ObservableObject {
                         return
                     }
                     
-                    let loaded: [ChatConversation] = documents.compactMap { doc in
+                    let loaded: [ChatConversation] = documents.compactMap { doc -> ChatConversation? in
                         let data = doc.data()
                         let id = doc.documentID
                         let participants = data["participants"] as? [String] ?? []
                         
                         guard participants.isEmpty || participants.contains(currentUserId) else { return nil }
                         
+                        let participantId = participants.first(where: { $0 != currentUserId }) ?? "partner_id"
                         let userName = data["partnerName"] as? String ?? (data["userName"] as? String ?? "User")
-                        let subjectName = data["subjectName"] as? String ?? "Subject"
+                        let userAvatar = data["userAvatar"] as? String ?? "person.circle.fill"
+                        let subjectName = data["subjectName"] as? String ?? "STATISTICS"
                         let lastMessage = data["lastMessage"] as? String ?? ""
-                        let timeString = data["timeString"] as? String ?? "Just now"
+                        let timestamp = data["timeString"] as? String ?? (data["timestamp"] as? String ?? "Just now")
                         let unreadCount = data["unreadCount"] as? Int ?? 0
+                        let hasUnread = unreadCount > 0 || (data["hasUnreadMessage"] as? Bool ?? false)
                         let isOnline = data["isOnline"] as? Bool ?? false
                         
                         return ChatConversation(
                             id: id,
+                            participantId: participantId,
                             userName: userName,
+                            userAvatar: userAvatar,
                             subjectName: subjectName,
                             lastMessage: lastMessage,
-                            timeString: timeString,
+                            timestamp: timestamp,
+                            hasUnreadMessage: hasUnread,
                             unreadCount: unreadCount,
                             isOnline: isOnline
                         )
@@ -102,19 +108,25 @@ class ChatsViewModel: ObservableObject {
         return [
             ChatConversation(
                 id: "chat_1",
+                participantId: "p1",
                 userName: "SHENALI MENON",
+                userAvatar: "person.circle.fill",
                 subjectName: "STATISTICS",
                 lastMessage: "Sure! I sent a session proposal for Tuesday.",
-                timeString: "2:32 PM",
+                timestamp: "2:32 PM",
+                hasUnreadMessage: true,
                 unreadCount: 1,
                 isOnline: true
             ),
             ChatConversation(
                 id: "chat_2",
+                participantId: "p2",
                 userName: "KAVINDU PERERA",
+                userAvatar: "person.circle.fill",
                 subjectName: "JAVA PROGRAMMING",
                 lastMessage: "Let's review the object-oriented concepts tomorrow.",
-                timeString: "Yesterday",
+                timestamp: "Yesterday",
+                hasUnreadMessage: false,
                 unreadCount: 0,
                 isOnline: false
             )
