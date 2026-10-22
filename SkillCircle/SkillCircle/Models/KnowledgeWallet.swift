@@ -16,15 +16,15 @@ struct TokenTransaction: Identifiable, Codable {
     let id: String
     let title: String
     let subjectName: String
-    let amount: Int
+    let amount: Double
     let type: TransactionType
-    let date: Date
+    let dateString: String // e.g. "Feb 24, 2026"
     let partnerName: String
+    let iconName: String // SF Symbol or custom designation
     
-    var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd/MM/yyyy"
-        return formatter.string(from: date)
+    var formattedAmount: String {
+        let prefix = type == .earned ? "+" : "-"
+        return String(format: "%@%.1f", prefix, abs(amount))
     }
 }
 

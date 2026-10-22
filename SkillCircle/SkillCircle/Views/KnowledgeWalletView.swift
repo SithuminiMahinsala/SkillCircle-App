@@ -10,6 +10,7 @@ import SwiftUI
 struct KnowledgeWalletView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = KnowledgeWalletViewModel()
+    @State private var showTransactionHistorySheet: Bool = false
     
     var body: some View {
         ZStack {
@@ -61,7 +62,6 @@ struct KnowledgeWalletView: View {
                     
                     // MARK: 2. Analytics Navigation Cards
                     HStack(spacing: 14) {
-                        // Skill Growth Navigation Link
                         NavigationLink(destination: SkillGrowthAnalyticsView()) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
@@ -83,7 +83,6 @@ struct KnowledgeWalletView: View {
                             .shadow(color: .black.opacity(0.03), radius: 6, x: 0, y: 2)
                         }
                         
-                        // Token Trends Navigation Link
                         NavigationLink(destination: TokenTrendsView()) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
@@ -108,7 +107,6 @@ struct KnowledgeWalletView: View {
                     
                     // MARK: 3. Earnings vs Spend Overview
                     HStack(spacing: 14) {
-                        // Total Earned Card
                         HStack(spacing: 12) {
                             ZStack {
                                 Circle()
@@ -134,7 +132,6 @@ struct KnowledgeWalletView: View {
                         .cornerRadius(16)
                         .shadow(color: .black.opacity(0.03), radius: 6, x: 0, y: 2)
                         
-                        // Total Spent Card
                         HStack(spacing: 12) {
                             ZStack {
                                 Circle()
@@ -161,12 +158,23 @@ struct KnowledgeWalletView: View {
                         .shadow(color: .black.opacity(0.03), radius: 6, x: 0, y: 2)
                     }
                     
-                    // MARK: 4. Scrollable Transaction History
+                    // MARK: 4. Scrollable Transaction History Header & List
                     VStack(alignment: .leading, spacing: 14) {
-                        Text("TRANSACTION HISTORY")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(Color(red: 0.12, green: 0.15, blue: 0.25))
-                            .padding(.horizontal, 4)
+                        HStack {
+                            Text("TRANSACTION HISTORY")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(Color(red: 0.12, green: 0.15, blue: 0.25))
+                            
+                            Spacer()
+                            
+                            // Trigger for Bottom Popup Sheet
+                            Button(action: { showTransactionHistorySheet = true }) {
+                                Text("View History")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(Color(red: 0.22, green: 0.30, blue: 0.72))
+                            }
+                        }
+                        .padding(.horizontal, 4)
                         
                         LazyVStack(spacing: 12) {
                             ForEach(viewModel.transactions) { transaction in
@@ -202,7 +210,7 @@ struct KnowledgeWalletView: View {
                                     
                                     Spacer()
                                     
-                                    Text("\(transaction.type == .earned ? "+" : "-")\(transaction.amount)")
+                                    Text("\(transaction.type == .earned ? "+" : "-")\(Int(transaction.amount))")
                                         .font(.system(size: 16, weight: .bold))
                                         .foregroundColor(transaction.type == .earned ? .green : .red)
                                 }
@@ -234,6 +242,12 @@ struct KnowledgeWalletView: View {
                         .foregroundColor(Color(red: 0.22, green: 0.30, blue: 0.72))
                 }
             }
+        }
+        // MARK: Bottom Popup Presentation Sheet
+        .sheet(isPresented: $showTransactionHistorySheet) {
+            TransactionHistorySheetView()
+                .presentationDetents([.fraction(0.88), .large])
+                .presentationDragIndicator(.visible)
         }
     }
 }
