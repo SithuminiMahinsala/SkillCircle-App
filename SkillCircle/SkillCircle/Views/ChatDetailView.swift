@@ -5,11 +5,18 @@ struct ChatDetailView: View {
     @StateObject private var viewModel: ChatDetailViewModel
     @State private var showProposeSessionSheet: Bool = false
     
-    init(partnerName: String = "SHENALI", subjectName: String = "STATISTICS", isTeacherView: Bool = false) {
+    // Replace lines 8-15 in SkillCircle/Views/ChatDetailView.swift
+    init(
+        partnerName: String = "SHENALI",
+        subjectName: String = "STATISTICS",
+        isTeacherView: Bool = false,
+        chatId: String = "chat_1"
+    ) {
         _viewModel = StateObject(wrappedValue: ChatDetailViewModel(
             partnerName: partnerName,
             subjectName: subjectName,
-            isTeacherView: isTeacherView
+            isTeacherView: isTeacherView,
+            chatId: chatId
         ))
     }
     

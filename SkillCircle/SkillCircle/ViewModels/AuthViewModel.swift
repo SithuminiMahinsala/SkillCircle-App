@@ -35,7 +35,6 @@ class AuthViewModel: ObservableObject {
         self.currentUser = Auth.auth().currentUser
         self.isAuthenticated = (Auth.auth().currentUser != nil)
         
-        // Listen to live Firebase Auth state transitions
         authStateListenerHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             DispatchQueue.main.async {
                 self?.currentUser = user
@@ -50,6 +49,7 @@ class AuthViewModel: ObservableObject {
         }
     }
     
+    // Login Overloads
     func login(email emailInput: String, password passwordInput: String, completion: @escaping (Bool) -> Void = { _ in }) {
         self.email = emailInput
         self.password = passwordInput
@@ -95,6 +95,14 @@ class AuthViewModel: ObservableObject {
         }
     }
     
+    // Registration Overloads
+    func register(email emailInput: String, password passwordInput: String, fullName fullNameInput: String = "", completion: @escaping (Bool) -> Void = { _ in }) {
+        self.email = emailInput
+        self.password = passwordInput
+        if !fullNameInput.isEmpty { self.fullName = fullNameInput }
+        registerUser(completion: completion)
+    }
+    
     func signUp() {
         registerUser { _ in }
     }
@@ -106,12 +114,11 @@ class AuthViewModel: ObservableObject {
     func registerUser(completion: @escaping (Bool) -> Void = { _ in }) {
         let activeEmail = email.isEmpty ? emailText : email
         let activePassword = password.isEmpty ? passwordText : password
-        let activeName = fullName.isEmpty ? fullNameText : fullName
+        let activeName = fullName.isEmpty ? (fullNameText.isEmpty ? "SkillCircle Student" : fullNameText) : fullName
         
         guard !activeEmail.trimmingCharacters(in: .whitespaces).isEmpty,
-              !activePassword.trimmingCharacters(in: .whitespaces).isEmpty,
-              !activeName.trimmingCharacters(in: .whitespaces).isEmpty else {
-            errorMessage = "Please fill in all registration fields."
+              !activePassword.trimmingCharacters(in: .whitespaces).isEmpty else {
+            errorMessage = "Please fill in email and password."
             completion(false)
             return
         }

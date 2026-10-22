@@ -1,10 +1,15 @@
-import SwiftUI
+//
+//  ChatsView.swift
+//  SkillCircle
+//
 
+import SwiftUI
 
 struct ChatsView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = ChatsViewModel()
     @State private var showNewChatSheet: Bool = false
+    @State private var activeChatDestination: ChatConversation? = nil
     
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -32,7 +37,12 @@ struct ChatsView: View {
                 ScrollView {
                     LazyVStack(spacing: 12) {
                         ForEach(viewModel.filteredConversations) { conversation in
-                            NavigationLink(destination: Text("Chat Detail with \(conversation.userName)")) {
+                            NavigationLink(destination: ChatDetailView(
+                                partnerName: conversation.userName,
+                                subjectName: conversation.subjectName,
+                                isTeacherView: false,
+                                chatId: conversation.id
+                            )) {
                                 ChatRowCard(conversation: conversation)
                             }
                             .buttonStyle(PlainButtonStyle())
@@ -68,22 +78,69 @@ struct ChatsView: View {
                         .foregroundColor(Color(red: 0.22, green: 0.30, blue: 0.72))
                 }
             }
-            
-            ToolbarItem(placement: .navigationBarTrailing) {
-                HStack(spacing: 12) {
-                    Button(action: {}) {
-                        Image(systemName: "person.crop.circle.fill")
-                            .font(.title2)
+        }
+        .sheet(isPresented: $showNewChatSheet) {
+            NewChatSheetView(viewModel: viewModel)
+        }
+    }
+}
+
+// MARK: - New Chat Tutor Selection Sheet
+struct NewChatSheetView: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var viewModel: ChatsViewModel
+    
+    // Sample Tutors list for quick conversation starting
+    let availableTutors = [
+        (uid: "tutor_shenali", name: "SHENALI MENON", subject: "STATISTICS"),
+        (uid: "tutor_kavindu", name: "KAVINDU PERERA", subject: "JAVA PROGRAMMING"),
+        (uid: "tutor_nuvi", name: "NUVI SHENAYA", subject: "UI/UX DESIGN")
+    ]
+    
+    var body: some View {
+        NavigationStack {
+            List(availableTutors, id: \.uid) { tutor in
+                Button(action: {
+                    viewModel.createOrGetChat(with: tutor.uid, partnerName: tutor.name, subjectName: tutor.subject) { _ in
+                        dismiss()
+                    }
+                }) {
+                    HStack(spacing: 12) {
+                        Image(systemName: "person.circle.fill")
+                            .resizable()
+                            .frame(width: 40, height: 40)
+                            .foregroundColor(Color(red: 0.22, green: 0.30, blue: 0.72))
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(tutor.name)
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(.primary)
+                            Text(tutor.subject)
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.gray)
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "bubble.right.fill")
                             .foregroundColor(Color(red: 0.22, green: 0.30, blue: 0.72))
                     }
-                    
-                    Button(action: {}) {
-                        Image(systemName: "bell")
-                            .font(.title3)
-                            .foregroundColor(Color(red: 0.22, green: 0.30, blue: 0.72))
-                    }
+                    .padding(.vertical, 4)
+                }
+            }
+            .navigationTitle("New Conversation")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") { dismiss() }
                 }
             }
         }
+    }
+}
+
+#Preview {
+    NavigationStack {
+        ChatsView()
     }
 }

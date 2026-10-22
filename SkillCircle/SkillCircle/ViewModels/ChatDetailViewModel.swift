@@ -41,8 +41,8 @@ class ChatDetailViewModel: ObservableObject {
             .addSnapshotListener { [weak self] snapshot, error in
                 guard let self = self else { return }
                 
-                if let documents = snapshot?.documents, !documents.isEmpty {
-                    let currentUserId = Auth.auth().currentUser?.uid ?? "current_user"
+                if let documents = snapshot?.documents {
+                    let currentUserId = Auth.auth().currentUser?.uid ?? ""
                     
                     let loadedMessages: [ChatMessage] = documents.compactMap { doc -> ChatMessage? in
                         let data = doc.data()
@@ -69,10 +69,6 @@ class ChatDetailViewModel: ObservableObject {
                     DispatchQueue.main.async {
                         self.messages = loadedMessages
                     }
-                } else {
-                    DispatchQueue.main.async {
-                        self.loadMockMessages()
-                    }
                 }
             }
     }
@@ -82,7 +78,7 @@ class ChatDetailViewModel: ObservableObject {
         let textToSend = typedMessage
         typedMessage = ""
         
-        let currentUserId = Auth.auth().currentUser?.uid ?? "user_1"
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
         
         let messageData: [String: Any] = [
             "senderId": currentUserId,
@@ -115,30 +111,5 @@ class ChatDetailViewModel: ObservableObject {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
         return formatter.string(from: date)
-    }
-    
-    private func loadMockMessages() {
-        self.messages = [
-            ChatMessage(
-                id: "m1",
-                senderId: "partner",
-                senderName: partnerName,
-                isFromCurrentUser: false,
-                textMessage: "Hi! Are you available to help me with Statistics this week?",
-                proposal: nil,
-                timestamp: "2:30 PM",
-                dateHeader: "TODAY"
-            ),
-            ChatMessage(
-                id: "m2",
-                senderId: "me",
-                senderName: "Me",
-                isFromCurrentUser: true,
-                textMessage: "Sure! I sent a session proposal for Tuesday at 3 PM.",
-                proposal: nil,
-                timestamp: "2:32 PM",
-                dateHeader: nil
-            )
-        ]
     }
 }

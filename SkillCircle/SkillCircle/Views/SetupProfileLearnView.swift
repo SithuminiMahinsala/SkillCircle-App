@@ -2,8 +2,6 @@
 //  SetupProfileLearnView.swift
 //  SkillCircle
 //
-//  Created by COBSCCOMP242P-001 on 2026-05-11.
-//
 
 import SwiftUI
 
@@ -89,5 +87,6 @@ struct SetupProfileLearnView: View {
 #Preview {
     NavigationStack {
         SetupProfileLearnView(email: "test@nibm.lk", password: "password")
+            .environmentObject(AuthViewModel())
     }
 }

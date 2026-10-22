@@ -1,11 +1,12 @@
 //
-//  SessionDetailsView.swift
+//  SessionDetailView.swift
 //  SkillCircle
 //
 //  Created by COBSCCOMP242P-001 on 2026-05-11.
 //
 
 import SwiftUI
+import MapKit
 
 struct SessionDetailView: View {
     @Environment(\.dismiss) private var dismiss
@@ -69,7 +70,7 @@ struct SessionDetailView: View {
             ActiveSessionLearnerView()
         }
         .navigationDestination(isPresented: $navigateToLocation) {
-            SessionLocationView()
+            SessionLocationView(locationName: viewModel.session.locationName)
         }
     }
     
@@ -243,5 +244,11 @@ struct SessionDetailView: View {
             .padding(.top, 8)
         }
         .padding(.top, 10)
+    }
+}
+
+#Preview {
+    NavigationStack {
+        SessionDetailView()
     }
 }

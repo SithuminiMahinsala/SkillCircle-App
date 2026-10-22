@@ -14,7 +14,6 @@ class ChatsViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
     
-    // Filtered conversations based on search text input
     var filteredConversations: [ChatConversation] {
         if searchText.trimmingCharacters(in: .whitespaces).isEmpty {
             return conversations
@@ -39,14 +38,13 @@ class ChatsViewModel: ObservableObject {
     }
     
     func fetchChats() {
-        guard let currentUserId = Auth.auth().currentUser?.uid else {
-            loadMockConversations()
-            return
-        }
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
         
         isLoading = true
         
+        // Listen in real-time to conversations involving the current logged-in user
         listenerRegistration = db.collection("chats")
+            .whereField("participants", arrayContains: currentUserId)
             .addSnapshotListener { [weak self] snapshot, error in
                 guard let self = self else { return }
                 
@@ -58,24 +56,27 @@ class ChatsViewModel: ObservableObject {
                         return
                     }
                     
-                    guard let documents = snapshot?.documents, !documents.isEmpty else {
-                        self.loadMockConversations()
+                    guard let documents = snapshot?.documents else {
+                        self.conversations = []
                         return
                     }
                     
-                    let loaded: [ChatConversation] = documents.compactMap { doc -> ChatConversation? in
+                    self.conversations = documents.compactMap { doc -> ChatConversation? in
                         let data = doc.data()
                         let id = doc.documentID
                         let participants = data["participants"] as? [String] ?? []
                         
-                        guard participants.isEmpty || participants.contains(currentUserId) else { return nil }
-                        
                         let participantId = participants.first(where: { $0 != currentUserId }) ?? "partner_id"
-                        let userName = data["partnerName"] as? String ?? (data["userName"] as? String ?? "User")
+                        let userName = data["partnerName"] as? String ?? "User"
                         let userAvatar = data["userAvatar"] as? String ?? "person.circle.fill"
-                        let subjectName = data["subjectName"] as? String ?? "STATISTICS"
+                        let subjectName = data["subjectName"] as? String ?? "GENERAL"
                         let lastMessage = data["lastMessage"] as? String ?? ""
-                        let timestamp = data["timeString"] as? String ?? (data["timestamp"] as? String ?? "Just now")
+                        
+                        let timestampDate = (data["updatedAt"] as? Timestamp)?.dateValue() ?? Date()
+                        let formatter = DateFormatter()
+                        formatter.timeStyle = .short
+                        let timestamp = formatter.string(from: timestampDate)
+                        
                         let unreadCount = data["unreadCount"] as? Int ?? 0
                         let hasUnread = unreadCount > 0 || (data["hasUnreadMessage"] as? Bool ?? false)
                         let isOnline = data["isOnline"] as? Bool ?? false
@@ -93,43 +94,32 @@ class ChatsViewModel: ObservableObject {
                             isOnline: isOnline
                         )
                     }
-                    
-                    self.conversations = loaded.isEmpty ? self.getMockList() : loaded
                 }
             }
     }
     
-    private func loadMockConversations() {
-        self.conversations = getMockList()
-        self.isLoading = false
-    }
-    
-    private func getMockList() -> [ChatConversation] {
-        return [
-            ChatConversation(
-                id: "chat_1",
-                participantId: "p1",
-                userName: "SHENALI MENON",
-                userAvatar: "person.circle.fill",
-                subjectName: "STATISTICS",
-                lastMessage: "Sure! I sent a session proposal for Tuesday.",
-                timestamp: "2:32 PM",
-                hasUnreadMessage: true,
-                unreadCount: 1,
-                isOnline: true
-            ),
-            ChatConversation(
-                id: "chat_2",
-                participantId: "p2",
-                userName: "KAVINDU PERERA",
-                userAvatar: "person.circle.fill",
-                subjectName: "JAVA PROGRAMMING",
-                lastMessage: "Let's review the object-oriented concepts tomorrow.",
-                timestamp: "Yesterday",
-                hasUnreadMessage: false,
-                unreadCount: 0,
-                isOnline: false
-            )
-        ]
+    // Function to start or retrieve a real-time conversation between two users
+    func createOrGetChat(with partnerUid: String, partnerName: String, subjectName: String, completion: @escaping (String) -> Void) {
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
+        
+        let chatId = currentUserId < partnerUid ? "\(currentUserId)_\(partnerUid)" : "\(partnerUid)_\(currentUserId)"
+        
+        let chatRef = db.collection("chats").document(chatId)
+        chatRef.getDocument { doc, error in
+            if let doc = doc, doc.exists {
+                completion(chatId)
+            } else {
+                let chatData: [String: Any] = [
+                    "participants": [currentUserId, partnerUid],
+                    "partnerName": partnerName,
+                    "subjectName": subjectName,
+                    "lastMessage": "Chat started",
+                    "updatedAt": FieldValue.serverTimestamp()
+                ]
+                chatRef.setData(chatData) { _ in
+                    completion(chatId)
+                }
+            }
+        }
     }
 }
