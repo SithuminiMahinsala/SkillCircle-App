@@ -20,3 +20,4 @@ extension Color {
     }
     
     static let deepIndigo = Color(hex: "3F51B5")
+}

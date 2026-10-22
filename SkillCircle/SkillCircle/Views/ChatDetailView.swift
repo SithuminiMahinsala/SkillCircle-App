@@ -3,6 +3,7 @@ import SwiftUI
 struct ChatDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: ChatDetailViewModel
+    @State private var showProposeSessionSheet: Bool = false
     
     init(partnerName: String = "SHENALI", subjectName: String = "STATISTICS", isTeacherView: Bool = false) {
         _viewModel = StateObject(wrappedValue: ChatDetailViewModel(
@@ -14,7 +15,7 @@ struct ChatDetailView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Message List Area
+            // MARK: 1. Message Stream Area
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 16) {
@@ -37,8 +38,8 @@ struct ChatDetailView: View {
                 }
             }
             
-            // "+ Propose New Session" Action Button
-            Button(action: {}) {
+            // MARK: 2. Propose New Session Action Button
+            Button(action: { showProposeSessionSheet = true }) {
                 Text("+ Propose New Session")
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(Color(red: 0.22, green: 0.30, blue: 0.72))
@@ -54,7 +55,7 @@ struct ChatDetailView: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 8)
             
-            // Bottom Message Input Bar
+            // MARK: 3. Message Input Bar
             HStack(spacing: 12) {
                 TextField("Type A Message...", text: $viewModel.typedMessage)
                     .font(.system(size: 14))
@@ -115,6 +116,17 @@ struct ChatDetailView: View {
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(Color(red: 0.22, green: 0.30, blue: 0.72))
                 }
+            }
+        }
+        
+        .sheet(isPresented: $showProposeSessionSheet) {
+            NavigationStack {
+                ProposeSessionView(
+                    subjectName: viewModel.subjectName,
+                    onProposalSent: {
+                        viewModel.loadMessages()
+                    }
+                )
             }
         }
     }

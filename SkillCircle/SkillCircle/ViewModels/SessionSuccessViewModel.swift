@@ -37,6 +37,8 @@ class SessionSuccessViewModel: ObservableObject {
             createdAt: Date()
         )
         
+        print("Feedback queued for session \(feedback.sessionId) with rating: \(feedback.rating)")
+        
         // Simulated network/Firebase submission delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
             guard let self = self else { return }

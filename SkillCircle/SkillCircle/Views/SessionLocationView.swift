@@ -194,6 +194,7 @@ struct LocationDetailCard: View {
         let placemark = MKPlacemark(coordinate: session.coordinate)
         let mapItem = MKMapItem(placemark: placemark)
         mapItem.name = session.title
+        
         mapItem.openInMaps(launchOptions: [
             MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeWalking
         ])
