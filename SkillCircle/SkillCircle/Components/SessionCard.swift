@@ -108,7 +108,7 @@ struct SessionCard: View {
             }
 
             // Action button
-            NavigationLink(destination: SessionDetailsView()) {
+            NavigationLink(destination: SessionDetailView()) {
                 Text(buttonTitle)
                     .font(.headline)
                     .foregroundColor(.white)

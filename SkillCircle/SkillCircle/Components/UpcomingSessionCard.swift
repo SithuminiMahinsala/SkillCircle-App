@@ -47,7 +47,8 @@ struct UpcomingSessionCard: View {
                 
                 Spacer()
                 
-                NavigationLink(destination: SessionDetailsView()) {
+            
+                NavigationLink(destination: SessionDetailView()) {
                     Image(systemName: "arrow.right.circle.fill")
                         .font(.title)
                         .foregroundColor(.deepIndigo)

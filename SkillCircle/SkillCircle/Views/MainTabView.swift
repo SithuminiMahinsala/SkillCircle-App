@@ -25,7 +25,7 @@ struct MainTabView: View {
             
             // MARK: Tab 1 - Sessions
             NavigationStack {
-                ActiveSessionLearnerView()
+                MySessionsView()
             }
             .tabItem {
                 Image(systemName: "calendar")
