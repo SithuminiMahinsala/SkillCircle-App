@@ -7,9 +7,9 @@ import SwiftUI
 
 struct ChatsView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var authViewModel: AuthViewModel
     @StateObject private var viewModel = ChatsViewModel()
     @State private var showNewChatSheet: Bool = false
-    @State private var activeChatDestination: ChatConversation? = nil
     
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -78,6 +78,14 @@ struct ChatsView: View {
                         .foregroundColor(Color(red: 0.22, green: 0.30, blue: 0.72))
                 }
             }
+            
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: { authViewModel.signOut() }) {
+                    Image(systemName: "rectangle.portrait.and.arrow.right")
+                        .font(.title3)
+                        .foregroundColor(.red)
+                }
+            }
         }
         .sheet(isPresented: $showNewChatSheet) {
             NewChatSheetView(viewModel: viewModel)
@@ -85,47 +93,56 @@ struct ChatsView: View {
     }
 }
 
-// MARK: - New Chat Tutor Selection Sheet
+// MARK: - Dynamic Real User Selection Sheet
 struct NewChatSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: ChatsViewModel
     
-    // Sample Tutors list for quick conversation starting
-    let availableTutors = [
-        (uid: "tutor_shenali", name: "SHENALI MENON", subject: "STATISTICS"),
-        (uid: "tutor_kavindu", name: "KAVINDU PERERA", subject: "JAVA PROGRAMMING"),
-        (uid: "tutor_nuvi", name: "NUVI SHENAYA", subject: "UI/UX DESIGN")
-    ]
-    
     var body: some View {
         NavigationStack {
-            List(availableTutors, id: \.uid) { tutor in
-                Button(action: {
-                    viewModel.createOrGetChat(with: tutor.uid, partnerName: tutor.name, subjectName: tutor.subject) { _ in
-                        dismiss()
+            Group {
+                if viewModel.availableUsers.isEmpty {
+                    VStack(spacing: 12) {
+                        ProgressView()
+                        Text("Searching for registered users...")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.gray)
                     }
-                }) {
-                    HStack(spacing: 12) {
-                        Image(systemName: "person.circle.fill")
-                            .resizable()
-                            .frame(width: 40, height: 40)
-                            .foregroundColor(Color(red: 0.22, green: 0.30, blue: 0.72))
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(tutor.name)
-                                .font(.system(size: 15, weight: .bold))
-                                .foregroundColor(.primary)
-                            Text(tutor.subject)
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(.gray)
+                } else {
+                    List(viewModel.availableUsers) { user in
+                        Button(action: {
+                            viewModel.createOrGetChat(
+                                with: user.id,
+                                partnerName: user.fullName,
+                                subjectName: user.primarySubject
+                            ) { _ in
+                                dismiss()
+                            }
+                        }) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "person.circle.fill")
+                                    .resizable()
+                                    .frame(width: 40, height: 40)
+                                    .foregroundColor(Color(red: 0.22, green: 0.30, blue: 0.72))
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(user.fullName)
+                                        .font(.system(size: 15, weight: .bold))
+                                        .foregroundColor(.primary)
+                                    
+                                    Text(user.primarySubject)
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .foregroundColor(.gray)
+                                }
+                                
+                                Spacer()
+                                
+                                Image(systemName: "bubble.right.fill")
+                                    .foregroundColor(Color(red: 0.22, green: 0.30, blue: 0.72))
+                            }
+                            .padding(.vertical, 4)
                         }
-                        
-                        Spacer()
-                        
-                        Image(systemName: "bubble.right.fill")
-                            .foregroundColor(Color(red: 0.22, green: 0.30, blue: 0.72))
                     }
-                    .padding(.vertical, 4)
                 }
             }
             .navigationTitle("New Conversation")
@@ -135,6 +152,9 @@ struct NewChatSheetView: View {
                     Button("Cancel") { dismiss() }
                 }
             }
+            .onAppear {
+                viewModel.fetchUsers()
+            }
         }
     }
 }
@@ -142,5 +162,6 @@ struct NewChatSheetView: View {
 #Preview {
     NavigationStack {
         ChatsView()
+            .environmentObject(AuthViewModel())
     }
 }

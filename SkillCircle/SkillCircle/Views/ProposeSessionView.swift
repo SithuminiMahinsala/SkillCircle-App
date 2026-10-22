@@ -1,3 +1,8 @@
+//
+//  ProposeSessionView.swift
+//  SkillCircle
+//
+
 import SwiftUI
 import MapKit
 
@@ -6,8 +11,8 @@ struct ProposeSessionView: View {
     @StateObject private var viewModel: ProposeSessionViewModel
     var onProposalSent: (() -> Void)?
     
-    init(subjectName: String = "STATISTICS", onProposalSent: (() -> Void)? = nil) {
-        _viewModel = StateObject(wrappedValue: ProposeSessionViewModel(subjectName: subjectName))
+    init(subjectName: String = "STATISTICS", chatId: String = "", onProposalSent: (() -> Void)? = nil) {
+        _viewModel = StateObject(wrappedValue: ProposeSessionViewModel(subjectName: subjectName, chatId: chatId))
         self.onProposalSent = onProposalSent
     }
     
@@ -290,7 +295,7 @@ struct ProposeSessionView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 16)
-                .padding(.bottom, 100) // Clear floating bottom button
+                .padding(.bottom, 100)
             }
             
             // MARK: 7. Fixed Bottom "Send Proposal" Button
@@ -336,5 +341,11 @@ struct ProposeSessionView: View {
                 }
             }
         }
+    }
+}
+
+#Preview {
+    NavigationStack {
+        ProposeSessionView()
     }
 }

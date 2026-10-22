@@ -28,6 +28,11 @@ class AuthViewModel: ObservableObject {
     @Published var currentUser: FirebaseAuth.User? = nil
     @Published var errorMessage: String? = nil
     
+    // Convenience property for root view navigation checks
+    var userSession: FirebaseAuth.User? {
+        return currentUser
+    }
+    
     private let db = Firestore.firestore()
     private var authStateListenerHandle: AuthStateDidChangeListenerHandle?
     
@@ -49,7 +54,7 @@ class AuthViewModel: ObservableObject {
         }
     }
     
-    // Login Overloads
+    // MARK: - Login Overloads
     func login(email emailInput: String, password passwordInput: String, completion: @escaping (Bool) -> Void = { _ in }) {
         self.email = emailInput
         self.password = passwordInput
@@ -95,12 +100,40 @@ class AuthViewModel: ObservableObject {
         }
     }
     
-    // Registration Overloads
-    func register(email emailInput: String, password passwordInput: String, fullName fullNameInput: String = "", completion: @escaping (Bool) -> Void = { _ in }) {
+    // MARK: - Registration Overloads
+    func register(
+        email emailInput: String,
+        password passwordInput: String,
+        fullName fullNameInput: String = "",
+        learningSkills: [String] = [],
+        completion: @escaping (Bool) -> Void = { _ in }
+    ) {
         self.email = emailInput
         self.password = passwordInput
         if !fullNameInput.isEmpty { self.fullName = fullNameInput }
-        registerUser(completion: completion)
+        registerUser(learningSkills: learningSkills, completion: completion)
+    }
+    
+    func register(
+        email emailInput: String,
+        password passwordInput: String,
+        learningSkills: [String] = [],
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
+        self.email = emailInput
+        self.password = passwordInput
+        registerUser(learningSkills: learningSkills) { success in
+            if success {
+                completion(.success(()))
+            } else {
+                let err = NSError(
+                    domain: "AuthError",
+                    code: -1,
+                    userInfo: [NSLocalizedDescriptionKey: self.errorMessage ?? "Registration failed"]
+                )
+                completion(.failure(err))
+            }
+        }
     }
     
     func signUp() {
@@ -111,7 +144,7 @@ class AuthViewModel: ObservableObject {
         registerUser { _ in }
     }
     
-    func registerUser(completion: @escaping (Bool) -> Void = { _ in }) {
+    func registerUser(learningSkills: [String] = [], completion: @escaping (Bool) -> Void = { _ in }) {
         let activeEmail = email.isEmpty ? emailText : email
         let activePassword = password.isEmpty ? passwordText : password
         let activeName = fullName.isEmpty ? (fullNameText.isEmpty ? "SkillCircle Student" : fullNameText) : fullName
@@ -144,6 +177,7 @@ class AuthViewModel: ObservableObject {
                 "uid": uid,
                 "fullName": activeName,
                 "email": activeEmail,
+                "learningSkills": learningSkills,
                 "tokensBalance": 10,
                 "totalEarned": 10,
                 "totalSpent": 0,

@@ -12,6 +12,9 @@ struct SetupProfileLearnView: View {
     
     @State private var searchText = ""
     @State private var selectedSkills: Set<String> = []
+    @State private var isLoading: Bool = false
+    @State private var showErrorAlert: Bool = false
+    @State private var errorMessage: String = ""
     
     let skills = ["SWIFT", "JAVA", "MATH", "UI/UX", "STATISTICS", "PYTHON"]
     let columns = [GridItem(.adaptive(minimum: 100), spacing: 12)]
@@ -37,7 +40,7 @@ struct SetupProfileLearnView: View {
             .padding(.horizontal, 24)
             
             LazyVGrid(columns: columns, spacing: 16) {
-                ForEach(skills, id: \.self) { skill in
+                ForEach(skills.filter { searchText.isEmpty || $0.contains(searchText.uppercased()) }, id: \.self) { skill in
                     Text(skill)
                         .font(.caption)
                         .fontWeight(.bold)
@@ -62,25 +65,59 @@ struct SetupProfileLearnView: View {
             
             Spacer()
             
-            Button(action: {
-                authViewModel.register(email: email, password: password)
-            }) {
-                Text("Complete Profile")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        Capsule()
-                            .fill(Color.deepIndigo)
-                            .shadow(color: Color.deepIndigo.opacity(0.3), radius: 10, x: 0, y: 5)
-                    )
+            Button(action: completeProfile) {
+                ZStack {
+                    if isLoading {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Text("Complete Profile")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(
+                    Capsule()
+                        .fill(Color.deepIndigo)
+                        .shadow(color: Color.deepIndigo.opacity(0.3), radius: 10, x: 0, y: 5)
+                )
             }
+            .disabled(isLoading)
             .padding(.horizontal, 24)
             .padding(.bottom, 30)
         }
         .navigationTitle("SET UP PROFILE")
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Registration Error", isPresented: $showErrorAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(errorMessage)
+        }
+    }
+    
+    private func completeProfile() {
+        isLoading = true
+        let learningSkillsArray = Array(selectedSkills)
+        
+        authViewModel.register(
+            email: email,
+            password: password,
+            learningSkills: learningSkillsArray
+        ) { result in
+            DispatchQueue.main.async {
+                isLoading = false
+                switch result {
+                case .success:
+                    // AuthViewModel updates userSession / isAuthenticated to trigger root view navigation
+                    break
+                case .failure(let error):
+                    self.errorMessage = error.localizedDescription
+                    self.showErrorAlert = true
+                }
+            }
+        }
     }
 }
 

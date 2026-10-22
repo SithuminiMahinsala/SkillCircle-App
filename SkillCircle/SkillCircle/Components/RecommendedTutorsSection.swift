@@ -31,7 +31,7 @@ struct RecommendedTutorsSection: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 16) {
                     RecommendedTutorCard(imageName: "TutorHirusha", name: "HIRUSHA", subject: "APPLIED PHYSICS", rating: "4.9")
-                    RecommendedTutorCard(imageName: "TutorAmeliya", name: "AMELIYA", subject: "UI/UX DESIGN", rating: "4.1")
+                    RecommendedTutorCard(imageName: "TutorShenali", name: "AMELIYA", subject: "UI/UX DESIGN", rating: "4.1")
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 10)

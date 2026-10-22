@@ -8,9 +8,17 @@ import Combine
 import FirebaseFirestore
 import FirebaseAuth
 
+struct AppUser: Identifiable {
+    let id: String
+    let fullName: String
+    let email: String
+    let primarySubject: String
+}
+
 class ChatsViewModel: ObservableObject {
     @Published var searchText: String = ""
     @Published var conversations: [ChatConversation] = []
+    @Published var availableUsers: [AppUser] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
     
@@ -42,7 +50,6 @@ class ChatsViewModel: ObservableObject {
         
         isLoading = true
         
-        // Listen in real-time to conversations involving the current logged-in user
         listenerRegistration = db.collection("chats")
             .whereField("participants", arrayContains: currentUserId)
             .addSnapshotListener { [weak self] snapshot, error in
@@ -98,7 +105,37 @@ class ChatsViewModel: ObservableObject {
             }
     }
     
-    // Function to start or retrieve a real-time conversation between two users
+    // Fetch all real registered users from Firestore excluding current user
+    func fetchUsers() {
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
+        
+        db.collection("users").getDocuments { [weak self] snapshot, error in
+            guard let self = self, let documents = snapshot?.documents, error == nil else { return }
+            
+            DispatchQueue.main.async {
+                self.availableUsers = documents.compactMap { doc in
+                    let data = doc.data()
+                    let uid = doc.documentID
+                    
+                    // Exclude current user from selection
+                    guard uid != currentUserId else { return nil }
+                    
+                    let fullName = data["fullName"] as? String ?? (data["email"] as? String ?? "SkillCircle User")
+                    let email = data["email"] as? String ?? ""
+                    let skills = data["learningSkills"] as? [String] ?? []
+                    let primarySubject = skills.first ?? "GENERAL"
+                    
+                    return AppUser(
+                        id: uid,
+                        fullName: fullName,
+                        email: email,
+                        primarySubject: primarySubject
+                    )
+                }
+            }
+        }
+    }
+    
     func createOrGetChat(with partnerUid: String, partnerName: String, subjectName: String, completion: @escaping (String) -> Void) {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
         

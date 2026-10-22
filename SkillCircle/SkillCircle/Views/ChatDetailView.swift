@@ -130,6 +130,7 @@ struct ChatDetailView: View {
             NavigationStack {
                 ProposeSessionView(
                     subjectName: viewModel.subjectName,
+                    chatId: viewModel.chatId,
                     onProposalSent: {
                         viewModel.loadMessages()
                     }
