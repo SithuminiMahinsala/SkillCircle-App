@@ -59,7 +59,54 @@ struct KnowledgeWalletView: View {
                     .cornerRadius(20)
                     .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 2)
                     
-                    // MARK: 2. Earnings vs Spend Overview
+                    // MARK: 2. Analytics Navigation Cards
+                    HStack(spacing: 14) {
+                        // Skill Growth Navigation Link
+                        NavigationLink(destination: SkillGrowthAnalyticsView()) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("SKILL GROWTH")
+                                        .font(.system(size: 11, weight: .bold))
+                                        .foregroundColor(Color(red: 0.22, green: 0.30, blue: 0.72))
+                                    Text("Analytics")
+                                        .font(.system(size: 15, weight: .bold))
+                                        .foregroundColor(Color(red: 0.12, green: 0.15, blue: 0.25))
+                                }
+                                Spacer()
+                                Image(systemName: "arrow.right.circle.fill")
+                                    .font(.system(size: 22))
+                                    .foregroundColor(Color(red: 0.22, green: 0.30, blue: 0.72))
+                            }
+                            .padding(16)
+                            .background(Color.white)
+                            .cornerRadius(16)
+                            .shadow(color: .black.opacity(0.03), radius: 6, x: 0, y: 2)
+                        }
+                        
+                        // Token Trends Navigation Link
+                        NavigationLink(destination: TokenTrendsView()) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("TOKEN TRENDS")
+                                        .font(.system(size: 11, weight: .bold))
+                                        .foregroundColor(Color(red: 0.95, green: 0.75, blue: 0.18))
+                                    Text("History")
+                                        .font(.system(size: 15, weight: .bold))
+                                        .foregroundColor(Color(red: 0.12, green: 0.15, blue: 0.25))
+                                }
+                                Spacer()
+                                Image(systemName: "arrow.right.circle.fill")
+                                    .font(.system(size: 22))
+                                    .foregroundColor(Color(red: 0.95, green: 0.75, blue: 0.18))
+                            }
+                            .padding(16)
+                            .background(Color.white)
+                            .cornerRadius(16)
+                            .shadow(color: .black.opacity(0.03), radius: 6, x: 0, y: 2)
+                        }
+                    }
+                    
+                    // MARK: 3. Earnings vs Spend Overview
                     HStack(spacing: 14) {
                         // Total Earned Card
                         HStack(spacing: 12) {
@@ -114,7 +161,7 @@ struct KnowledgeWalletView: View {
                         .shadow(color: .black.opacity(0.03), radius: 6, x: 0, y: 2)
                     }
                     
-                    // MARK: 3. Scrollable Transaction History
+                    // MARK: 4. Scrollable Transaction History
                     VStack(alignment: .leading, spacing: 14) {
                         Text("TRANSACTION HISTORY")
                             .font(.system(size: 11, weight: .bold))
