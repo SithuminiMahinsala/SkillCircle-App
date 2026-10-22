@@ -1,5 +1,12 @@
+//
+//  ChatDetailViewModel.swift
+//  SkillCircle
+//
+
 import SwiftUI
 import Combine
+import FirebaseFirestore
+import FirebaseAuth
 
 class ChatDetailViewModel: ObservableObject {
     @Published var messages: [ChatMessage] = []
@@ -8,93 +15,128 @@ class ChatDetailViewModel: ObservableObject {
     
     let partnerName: String
     let subjectName: String
+    let chatId: String
     
-    init(partnerName: String = "SHENALI", subjectName: String = "STATISTICS", isTeacherView: Bool = false) {
+    private let db = Firestore.firestore()
+    private var listenerRegistration: ListenerRegistration?
+    
+    init(partnerName: String = "SHENALI", subjectName: String = "STATISTICS", isTeacherView: Bool = false, chatId: String = "chat_1") {
         self.partnerName = partnerName
         self.subjectName = subjectName
         self.isTeacherView = isTeacherView
-        loadMessages()
+        self.chatId = chatId
+        
+        listenToMessages()
     }
     
-    func loadMessages() {
-        self.messages = ChatDetailViewModel.mockMessages(isTeacher: isTeacherView)
+    deinit {
+        listenerRegistration?.remove()
+    }
+    
+    func listenToMessages() {
+        listenerRegistration = db.collection("chats")
+            .document(chatId)
+            .collection("messages")
+            .order(by: "timestamp", descending: false)
+            .addSnapshotListener { [weak self] snapshot, error in
+                guard let self = self else { return }
+                
+                if let documents = snapshot?.documents, !documents.isEmpty {
+                    let currentUserId = Auth.auth().currentUser?.uid ?? "current_user"
+                    
+                    let loadedMessages: [ChatMessage] = documents.compactMap { doc -> ChatMessage? in
+                        let data = doc.data()
+                        let id = doc.documentID
+                        let senderId = data["senderId"] as? String ?? ""
+                        let text = data["textMessage"] as? String ?? (data["text"] as? String ?? "")
+                        let timestampDate = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
+                        let isFromCurrentUser = (senderId == currentUserId)
+                        let senderName = isFromCurrentUser ? "Me" : self.partnerName
+                        let timeString = self.formattedTimeString(from: timestampDate)
+                        
+                        return ChatMessage(
+                            id: id,
+                            senderId: senderId,
+                            senderName: senderName,
+                            isFromCurrentUser: isFromCurrentUser,
+                            textMessage: text,
+                            proposal: nil,
+                            timestamp: timeString,
+                            dateHeader: nil
+                        )
+                    }
+                    
+                    DispatchQueue.main.async {
+                        self.messages = loadedMessages
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        self.loadMockMessages()
+                    }
+                }
+            }
     }
     
     func sendMessage() {
         guard !typedMessage.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-        
-        let newMessage = ChatMessage(
-            id: UUID().uuidString,
-            senderId: "CURRENT_USER",
-            senderName: "Me",
-            isFromCurrentUser: true,
-            textMessage: typedMessage,
-            proposal: nil,
-            timestamp: "10:43 AM",
-            dateHeader: nil
-        )
-        
-        messages.append(newMessage)
+        let textToSend = typedMessage
         typedMessage = ""
         
-        // TODO: Persist to Firebase Firestore collection("chats/{chatId}/messages")
-    }
-    
-    func confirmProposal(proposalId: String) {
-        if let index = messages.firstIndex(where: { $0.proposal?.id == proposalId }) {
-            guard var proposal = messages[index].proposal else { return }
-            proposal.status = .confirmed
-            messages[index] = ChatMessage(
-                id: messages[index].id,
-                senderId: messages[index].senderId,
-                senderName: messages[index].senderName,
-                isFromCurrentUser: messages[index].isFromCurrentUser,
-                textMessage: messages[index].textMessage,
-                proposal: proposal,
-                timestamp: messages[index].timestamp,
-                dateHeader: messages[index].dateHeader
-            )
+        let currentUserId = Auth.auth().currentUser?.uid ?? "user_1"
+        
+        let messageData: [String: Any] = [
+            "senderId": currentUserId,
+            "textMessage": textToSend,
+            "text": textToSend,
+            "timestamp": FieldValue.serverTimestamp()
+        ]
+        
+        db.collection("chats").document(chatId).collection("messages").addDocument(data: messageData) { [weak self] error in
+            if error == nil {
+                self?.db.collection("chats").document(self?.chatId ?? "").setData([
+                    "lastMessage": textToSend,
+                    "updatedAt": FieldValue.serverTimestamp()
+                ], merge: true)
+            }
         }
     }
     
-    static func mockMessages(isTeacher: Bool) -> [ChatMessage] {
-        return [
+    func confirmProposal(proposalId: String) {
+        db.collection("session_proposals").document(proposalId).updateData([
+            "status": "CONFIRMED"
+        ])
+    }
+    
+    func loadMessages() {
+        listenToMessages()
+    }
+    
+    private func formattedTimeString(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
+    
+    private func loadMockMessages() {
+        self.messages = [
             ChatMessage(
-                id: "MSG-01",
-                senderId: "USER-LEARNER",
-                senderName: "Shenali",
-                isFromCurrentUser: !isTeacher,
-                textMessage: "Hello! I'm struggling with the quadratic equations homework. Can we schedule a quick session today?",
+                id: "m1",
+                senderId: "partner",
+                senderName: partnerName,
+                isFromCurrentUser: false,
+                textMessage: "Hi! Are you available to help me with Statistics this week?",
                 proposal: nil,
-                timestamp: "10:42 AM",
-                dateHeader: "TODAY, 31 MAR"
+                timestamp: "2:30 PM",
+                dateHeader: "TODAY"
             ),
             ChatMessage(
-                id: "MSG-02",
-                senderId: "USER-TEACHER",
+                id: "m2",
+                senderId: "me",
                 senderName: "Me",
-                isFromCurrentUser: isTeacher,
-                textMessage: "Ok! i will send you proposal session. check and confirm it. if u have any changes inform me.",
+                isFromCurrentUser: true,
+                textMessage: "Sure! I sent a session proposal for Tuesday at 3 PM.",
                 proposal: nil,
-                timestamp: "10:42 AM",
-                dateHeader: nil
-            ),
-            ChatMessage(
-                id: "MSG-03",
-                senderId: "USER-TEACHER",
-                senderName: "Me",
-                isFromCurrentUser: isTeacher,
-                textMessage: nil,
-                proposal: SessionProposal(
-                    id: "PROP-01",
-                    sessionId: isTeacher ? "SID-011" : "#ST-402",
-                    dateText: "24 MAR 2026",
-                    timeRange: "15 : 00 - 16 : 00",
-                    location: "Library",
-                    method: "Physical",
-                    status: .awaitingConfirmation
-                ),
-                timestamp: "10:42 AM",
+                timestamp: "2:32 PM",
                 dateHeader: nil
             )
         ]

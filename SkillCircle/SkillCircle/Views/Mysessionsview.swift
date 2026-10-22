@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import Combine
 
 struct MySessionsView: View {
     @StateObject private var viewModel = MySessionsViewModel()

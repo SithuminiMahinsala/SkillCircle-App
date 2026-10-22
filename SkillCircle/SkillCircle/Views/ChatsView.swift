@@ -1,5 +1,6 @@
 import SwiftUI
 
+
 struct ChatsView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = ChatsViewModel()

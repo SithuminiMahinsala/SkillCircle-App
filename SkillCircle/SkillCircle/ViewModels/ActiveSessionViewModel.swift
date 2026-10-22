@@ -1,56 +1,92 @@
+//
+//  ActiveSessionViewModel.swift
+//  SkillCircle
+//
+
 import SwiftUI
 import Combine
+import FirebaseFirestore
+import FirebaseAuth
 
 class ActiveSessionViewModel: ObservableObject {
-    @Published var session: ActiveSession
-    @Published var formattedTime: String = "45 : 00"
+    @Published var activeSession: ActiveSession
+    @Published var isSessionCompleted: Bool = false
+    @Published var isVerifyingCode: Bool = false
+    @Published var alertMessage: String? = nil
     
-    private var timer: AnyCancellable?
-    
-    init(session: ActiveSession = ActiveSessionViewModel.mockSession) {
-        self.session = session
-        updateFormattedTime()
-        startTimer()
+    // Convenience alias property for views expecting 'viewModel.session'
+    var session: ActiveSession {
+        get { activeSession }
+        set { activeSession = newValue }
     }
     
-    // MARK: - Timer Logic
-    func startTimer() {
-        timer?.cancel()
-        timer = Timer.publish(every: 1.0, on: .main, in: .common)
-            .autoconnect()
-            .sink { [weak self] _ in
+    // Formats remaining time into MM:SS for the timer view
+    var formattedTime: String {
+        let minutes = activeSession.remainingSeconds / 60
+        let seconds = activeSession.remainingSeconds % 60
+        return String(format: "%02d:%02d", minutes, seconds)
+    }
+    
+    private let db = Firestore.firestore()
+    
+    init(session: ActiveSession? = nil) {
+        self.activeSession = session ?? ActiveSession(
+            id: "sess_active_101",
+            subjectName: "STATISTICS",
+            learnerName: "SHENALI MENON",
+            durationMinutes: 60,
+            remainingSeconds: 3600,
+            status: .active,
+            qrCodePayload: "SKILL-STAT-2026"
+        )
+    }
+    
+    func verifyLearnerQRCode(scannedCode: String, completion: @escaping (Bool) -> Void) {
+        isVerifyingCode = true
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            guard let self = self else { return }
+            self.isVerifyingCode = false
+            
+            if scannedCode == self.activeSession.qrCodePayload || scannedCode.contains("SKILL") {
+                self.completeSessionInFirestore(completion: completion)
+            } else {
+                self.alertMessage = "Invalid QR code scanned. Please try again."
+                completion(false)
+            }
+        }
+    }
+    
+    private func completeSessionInFirestore(completion: @escaping (Bool) -> Void) {
+        let currentUserId = Auth.auth().currentUser?.uid ?? "teacher_id"
+        let batch = db.batch()
+        
+        let sessionRef = db.collection("sessions").document(activeSession.id)
+        batch.setData(["status": "COMPLETED", "completedAt": FieldValue.serverTimestamp()], forDocument: sessionRef, merge: true)
+        
+        let txRef = db.collection("users").document(currentUserId).collection("transactions").document()
+        batch.setData([
+            "title": "\(activeSession.subjectName) - Teaching",
+            "subjectName": activeSession.subjectName,
+            "amount": 1.0,
+            "type": "EARNED",
+            "dateString": "Today",
+            "partnerName": activeSession.learnerName,
+            "iconName": "star.fill",
+            "timestamp": FieldValue.serverTimestamp()
+        ], forDocument: txRef)
+        
+        batch.commit { [weak self] error in
+            DispatchQueue.main.async {
                 guard let self = self else { return }
-                if self.session.remainingSeconds > 0 {
-                    self.session.remainingSeconds -= 1
-                    self.updateFormattedTime()
+                if let error = error {
+                    self.alertMessage = "Error updating session: \(error.localizedDescription)"
+                    completion(false)
                 } else {
-                    self.session.status = .completed
-                    self.timer?.cancel()
+                    self.isSessionCompleted = true
+                    completion(true)
                 }
             }
+        }
     }
-    
-    private func updateFormattedTime() {
-        let minutes = session.remainingSeconds / 60
-        let seconds = session.remainingSeconds % 60
-        formattedTime = String(format: "%02d : %02d", minutes, seconds)
-    }
-    
-    // MARK: - Firebase Listener Integration (Future Swap)
-    func listenToFirebaseSession(sessionId: String) {
-        // TODO: Replace with Firebase Firestore real-time listener:
-        // Firestore.firestore().collection("sessions").document(sessionId)
-        //     .addSnapshotListener { document, error in ... }
-    }
-    
-    // MARK: - Mock Data
-    static let mockSession = ActiveSession(
-        id: "SES-1029",
-        subjectName: "STATISTICS",
-        learnerName: "SHENALI GAMAGE",
-        durationMinutes: 45,
-        remainingSeconds: 2700,
-        status: .active,
-        qrCodePayload: "skillcircle://session/SES-1029/verify"
-    )
 }

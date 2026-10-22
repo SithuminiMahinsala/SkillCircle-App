@@ -2,119 +2,166 @@
 //  AuthViewModel.swift
 //  SkillCircle
 //
-//  Created by COBSCCOMP242P-001 on 2026-05-11.
-//
 
+import SwiftUI
 import Combine
-import Foundation
 import FirebaseAuth
 import FirebaseFirestore
 
 class AuthViewModel: ObservableObject {
-    @Published var currentUser: User?
-    @Published var errorMessage: String?
+    @Published var email: String = "" {
+        didSet { emailText = email }
+    }
+    @Published var password: String = "" {
+        didSet { passwordText = password }
+    }
+    @Published var fullName: String = "" {
+        didSet { fullNameText = fullName }
+    }
+    
+    @Published var emailText: String = ""
+    @Published var passwordText: String = ""
+    @Published var fullNameText: String = ""
+    
+    @Published var isLoading: Bool = false
+    @Published var isAuthenticated: Bool = false
+    @Published var currentUser: FirebaseAuth.User? = nil
+    @Published var errorMessage: String? = nil
+    
+    private let db = Firestore.firestore()
+    private var authStateListenerHandle: AuthStateDidChangeListenerHandle?
     
     init() {
-        // Automatically check if the user is already logged in when the app starts
-        fetchUser()
-    }
-    
-    // MARK: - Sign In
-    func login(email: String, password: String) {
-        Auth.auth().signIn(withEmail: email, password: password) { [weak self] result, error in
-            if let error = error {
-                self?.errorMessage = error.localizedDescription
-                print("Failed to log in: \(error.localizedDescription)")
-                return
+        self.currentUser = Auth.auth().currentUser
+        self.isAuthenticated = (Auth.auth().currentUser != nil)
+        
+        // Listen to live Firebase Auth state transitions
+        authStateListenerHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
+            DispatchQueue.main.async {
+                self?.currentUser = user
+                self?.isAuthenticated = (user != nil)
             }
-            
-            print("Successfully logged in!")
-            self?.fetchUser()
         }
     }
     
-    // MARK: - Sign Up
-    func register(email: String, password: String) {
-        Auth.auth().createUser(withEmail: email, password: password) { [weak self] result, error in
-            if let error = error {
-                self?.errorMessage = error.localizedDescription
-                print("Failed to register: \(error.localizedDescription)")
-                return
-            }
-            
-            guard let uid = result?.user.uid else { return }
-            
-            // 1. Create the database profile using your User model
-            let newUser = User(
-                id: uid,
-                name: "New Student", // Can be updated in a profile setup screen later
-                email: email,
-                university: "NIBM",
-                teachSkills: [],
-                seekSkills: [],
-                tokenBalance: 50.0 // Give them a starting bonus of tokens
-            )
-            
-            // 2. Save it to Firestore
-            self?.saveUserData(user: newUser)
+    deinit {
+        if let handle = authStateListenerHandle {
+            Auth.auth().removeStateDidChangeListener(handle)
         }
     }
     
-    // MARK: - Sign Out
+    func login(email emailInput: String, password passwordInput: String, completion: @escaping (Bool) -> Void = { _ in }) {
+        self.email = emailInput
+        self.password = passwordInput
+        loginUser(completion: completion)
+    }
+    
+    func login() {
+        loginUser { _ in }
+    }
+    
+    func login(completion: @escaping (Bool) -> Void) {
+        loginUser(completion: completion)
+    }
+    
+    func loginUser(completion: @escaping (Bool) -> Void = { _ in }) {
+        let activeEmail = email.isEmpty ? emailText : email
+        let activePassword = password.isEmpty ? passwordText : password
+        
+        guard !activeEmail.trimmingCharacters(in: .whitespaces).isEmpty,
+              !activePassword.trimmingCharacters(in: .whitespaces).isEmpty else {
+            errorMessage = "Please enter email and password."
+            completion(false)
+            return
+        }
+        
+        isLoading = true
+        errorMessage = nil
+        
+        Auth.auth().signIn(withEmail: activeEmail, password: activePassword) { [weak self] authResult, error in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                self.isLoading = false
+                
+                if let error = error {
+                    self.errorMessage = error.localizedDescription
+                    completion(false)
+                } else {
+                    self.currentUser = authResult?.user
+                    self.isAuthenticated = true
+                    completion(true)
+                }
+            }
+        }
+    }
+    
+    func signUp() {
+        registerUser { _ in }
+    }
+    
+    func register() {
+        registerUser { _ in }
+    }
+    
+    func registerUser(completion: @escaping (Bool) -> Void = { _ in }) {
+        let activeEmail = email.isEmpty ? emailText : email
+        let activePassword = password.isEmpty ? passwordText : password
+        let activeName = fullName.isEmpty ? fullNameText : fullName
+        
+        guard !activeEmail.trimmingCharacters(in: .whitespaces).isEmpty,
+              !activePassword.trimmingCharacters(in: .whitespaces).isEmpty,
+              !activeName.trimmingCharacters(in: .whitespaces).isEmpty else {
+            errorMessage = "Please fill in all registration fields."
+            completion(false)
+            return
+        }
+        
+        isLoading = true
+        errorMessage = nil
+        
+        Auth.auth().createUser(withEmail: activeEmail, password: activePassword) { [weak self] authResult, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                    self.errorMessage = error.localizedDescription
+                    completion(false)
+                }
+                return
+            }
+            
+            guard let uid = authResult?.user.uid else { return }
+            
+            let userData: [String: Any] = [
+                "uid": uid,
+                "fullName": activeName,
+                "email": activeEmail,
+                "tokensBalance": 10,
+                "totalEarned": 10,
+                "totalSpent": 0,
+                "createdAt": FieldValue.serverTimestamp()
+            ]
+            
+            self.db.collection("users").document(uid).setData(userData) { error in
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                    if let error = error {
+                        self.errorMessage = error.localizedDescription
+                        completion(false)
+                    } else {
+                        self.currentUser = authResult?.user
+                        self.isAuthenticated = true
+                        completion(true)
+                    }
+                }
+            }
+        }
+    }
+    
     func signOut() {
-        do {
-            try Auth.auth().signOut()
-            self.currentUser = nil
-            print("Successfully signed out")
-        } catch {
-            print("Error signing out: \(error.localizedDescription)")
-        }
-    }
-    
-    // MARK: - Database Helpers
-    private func saveUserData(user: User) {
-        let db = Firestore.firestore()
-        
-        db.collection("users").document(user.id).setData([
-            "id": user.id,
-            "name": user.name,
-            "email": user.email,
-            "university": user.university,
-            "teachSkills": user.teachSkills,
-            "seekSkills": user.seekSkills,
-            "tokenBalance": user.tokenBalance
-        ]) { [weak self] error in
-            if let error = error {
-                print("Error saving user data: \(error.localizedDescription)")
-                return
-            }
-            print("Successfully saved user data to Firestore!")
-            self?.fetchUser()
-        }
-    }
-    
-    private func fetchUser() {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        
-        let db = Firestore.firestore()
-        db.collection("users").document(uid).getDocument { [weak self] snapshot, error in
-            if let error = error {
-                print("Error fetching user: \(error.localizedDescription)")
-                return
-            }
-            
-            guard let data = snapshot?.data() else { return }
-            
-            // Map the Firestore data back to the Swift User model
-            self?.currentUser = User(
-                id: data["id"] as? String ?? uid,
-                name: data["name"] as? String ?? "",
-                email: data["email"] as? String ?? "",
-                university: data["university"] as? String ?? "",
-                teachSkills: data["teachSkills"] as? [String] ?? [],
-                seekSkills: data["seekSkills"] as? [String] ?? [],
-                tokenBalance: data["tokenBalance"] as? Double ?? 0.0
-            )
-        }
+        try? Auth.auth().signOut()
+        self.currentUser = nil
+        self.isAuthenticated = false
     }
 }
