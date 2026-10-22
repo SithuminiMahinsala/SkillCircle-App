@@ -142,13 +142,11 @@ struct SkillGrowthAnalyticsView: View {
                                 .foregroundColor(Color(red: 0.12, green: 0.15, blue: 0.25))
                             
                             (
-                                Text("You are a Top 5% Tutor in Statistics this month! You've earned ")
+                                Text(.init("You are a Top 5% Tutor in Statistics this month! You've earned **[15 tokens]()** by helping 8 peers."))
+                                    .font(.system(size: 13))
                                     .foregroundColor(.gray)
-                                + Text("15 tokens")
-                                    .font(.system(size: 13, weight: .bold))
-                                    .foregroundColor(Color(red: 0.22, green: 0.30, blue: 0.72))
-                                + Text(" by helping 8 peers.")
-                                    .foregroundColor(.gray)
+                                    .tint(Color(red: 0.22, green: 0.30, blue: 0.72))
+                                    .lineSpacing(2)
                             )
                             .font(.system(size: 13))
                             .lineSpacing(2)
