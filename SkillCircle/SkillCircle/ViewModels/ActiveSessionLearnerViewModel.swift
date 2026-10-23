@@ -64,18 +64,18 @@ class ActiveSessionLearnerViewModel: ObservableObject {
         formattedTime = String(format: "%02d : %02d", minutes, seconds)
     }
     
-    // MARK: - End Session Early Action
+    // End Session Early Action
     func endSession() {
         timer?.cancel()
         session.status = .completed
     }
     
-    // MARK: - Firebase Listener (Future Swap)
+    //  Firebase Listener (Future Swap)
     func syncWithFirebase(sessionId: String) {
         // TODO: Replace mock sync with Firebase Firestore real-time listener
     }
     
-    // MARK: - Mock Data
+    // Mock Data
     static let mockSession = ActiveSession(
         id: "SES-1029",
         subjectName: "STATISTICS",
