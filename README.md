@@ -4,9 +4,9 @@
 
 **SkillCircle** is a native iOS peer-to-peer skill-sharing and tutoring application designed to connect learners and tutors within academic communities. Built with **SwiftUI** and **Firebase**, SkillCircle enables students to exchange knowledge seamlessly through real-time messaging, flexible session proposal management, interactive meeting point selection, live session status tracking, and home screen widgets.
 
-##  Key Features & Highlights
+## Key Features & Highlights
 
-### 1. Real-Time Chat & Session Proposals
+### 1. 💬 Real-Time Chat & Session Proposals
 
 * **Firebase Cloud Firestore Sync:** Instant messaging backed by live Firestore snapshot listeners.
 
@@ -22,13 +22,13 @@
 
 * **`ActivityChartWidget` (Medium):** Visualizes weekly teaching vs. learning hours using a custom bar chart.
 
-### 3.  Interactive Location Selection & MapKit
+### 3. Interactive Location Selection & MapKit
 
 * Integrated Apple **MapKit** framework for selecting and visualizing meeting locations (libraries, labs, cafeterias, online links).
 
 * Pin annotations and spatial route directions for session venues.
 
-### 4. Push Notifications (`UserNotifications` Framework)
+### 4.  Push Notifications (`UserNotifications` Framework)
 
 * Local push notification alerts delivered when peer proposals are sent, accepted, or rescheduled.
 
@@ -40,7 +40,7 @@
 
 * Ensures offline availability of user schedules without an active internet connection.
 
-##  System Architecture & Technology Stack
+## System Architecture & Technology Stack
 
 The application follows the **MVVM (Model-View-ViewModel)** architectural pattern for clean code separation, testability, and reactive state management using **Combine**.
 
@@ -120,6 +120,23 @@ SkillCircle App Architecture
 
    * To preview Home Screen Widgets, select the **SkillCircleWidgetsExtension** scheme and run on the simulator.
 
+## Test Account Credentials for Assessors / Evaluators
 
+To test cross-device real-time synchronization between two simulator instances:
+
+| Account Role | Email Address | Password | 
+| ----- | ----- | ----- | 
+| **Learner Test Account** | `learner.test@student.com` | `TestPassword123!` | 
+| **Teacher Test Account** | `teacher.test@student.com` | `TestPassword123!` | 
+
+### Quick Verification Steps for Markers:
+
+1. Launch **Simulator A** and log into `learner.test@student.com`.
+
+2. Launch **Simulator B** and log into `teacher.test@student.com`.
+
+3. Send a session proposal from Chat in Simulator A.
+
+4. Observe real-time proposal update and status changes instantly reflected in Simulator B.
 
 
